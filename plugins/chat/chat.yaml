@@ -1,0 +1,29 @@
+name: chat
+template_format: semantic-kernel
+template: |
+  You are a helpful chatbot for users of Semantic Kernel in Python, you reply with complete sentences but you keep it brief.
+  You always try to provide answers with a code snippet that helps the users develop rather then just explanations.
+  {{$chat_history}}{{$user_input}}
+description: A chat bot that helps the user.
+input_variables:
+  - name: chat_history
+    description: The on-going chat history
+    is_required: true
+  - name: user_input
+    description: The user input
+    is_required: true
+execution_settings:
+  online:
+    function_choice_behavior:
+      type: auto
+      maximum_auto_invoke_attempts: 3
+      filters:
+        included_plugins:
+          - online_search
+  offline:
+    function_choice_behavior:
+      type: auto
+      maximum_auto_invoke_attempts: 3
+      filters:
+        included_plugins:
+          - offline_search

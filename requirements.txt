@@ -1,0 +1,11 @@
+semantic-kernel[azure, ollama, qdrant]
+mesop
+debugpy
+llama-index
+llama-index-readers-github
+llama-index-vector-stores-azureaisearch
+llama-index-vector-stores-qdrant
+llama-index-embeddings-ollama
+tree-sitter-languages
+tree-sitter-python
+tree-sitter
