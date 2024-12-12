@@ -1,4 +1,4 @@
-semantic-kernel[azure, ollama, qdrant]
+semantic_kernel[azure, ollama, qdrant]
 mesop
 debugpy
 llama-index

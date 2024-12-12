@@ -13,20 +13,29 @@ Copy the .env.example file and rename it to .env. Fill in the values for the fol
 
 You can also adjust the Qdrant settings.
 
+
 The data loading requires this environment variable:
 - GITHUB_TOKEN
+
+### qdrant
+Setup qdrant, this can be done in a container locally, or on a remote server. The following command will start a qdrant container on your local machine:
+```bash
+docker run -d -p 6333:6333 -p 6334:6334 qdrant/qdrant:latest
+```
 
 ### venv
 Create a virtual environment and activate it:
 ```bash
 uv venv --python=3.12
+source .venv/bin/activate (or .venv/Scripts/activate on Windows)
+uv pip install -r requirements.txt --prerelease=allow
 ```
 
 ## Loading data
 To load the data, run the following command, depending on the repo used, this might take a while:
 ```bash
-source .venv/bin/activate
-python data/main.py
+source .venv/bin/activate (or .venv/Scripts/activate on Windows)
+python data_ingestion/main.py
 ```
 
 You can control which service you want to have indexed, by using the following flags:
@@ -39,6 +48,8 @@ python data/main.py --no-qdrant # this will only index Azure AI
 ```
 
 By default, both will be indexed.
+
+To review the data when you have Qdrant running locally you can open: `http://localhost:6333/dashboard` in your browser.
 
 ## Running the app
 To run the app, simply run the following command:

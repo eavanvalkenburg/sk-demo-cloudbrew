@@ -2,7 +2,9 @@ import argparse
 import asyncio
 import os
 from contextlib import asynccontextmanager
+import logging
 
+from dotenv.main import logger
 import nest_asyncio
 import qdrant_client
 from azure.core.credentials import AzureKeyCredential
@@ -27,14 +29,16 @@ from llama_index.vector_stores.azureaisearch import (
 from llama_index.vector_stores.qdrant import QdrantVectorStore
 from tree_sitter import Language, Parser
 from tree_sitter_python import language
+from dotenv import load_dotenv
 
-# dotenv.load_dotenv()
+load_dotenv()
 nest_asyncio.apply()
 
-lang = Language(language())
-parser = Parser(lang)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+# logging.basicConfig(level=logging.INFO)
 
-CACHE_PERSIST_PATH = "data_ingestion/data/data.cache"
+CACHE_PERSIST_PATH = "data_ingestion\\data\\data-new.cache"
 
 search_service_endpoint = os.getenv("AZURE_AI_SEARCH_ENDPOINT")
 index_name = os.getenv("AZURE_AI_SEARCH_INDEX_NAME")
@@ -59,11 +63,11 @@ def extract_tag(node: BaseNode) -> dict:
         # topic = semantic_kernel
         # subtopic = memory
         # connector = weaviate
-        topic = filepath.split("/")[1]
-        subtopic = filepath.split("/")[2]
-        if "semantic_kernel/connectors" in filepath:
-            subtopic = filepath.split("/")[2]
-            connector = filepath.split("/")[3]
+        topic = filepath.split("\\")[1]
+        subtopic = filepath.split("\\")[2]
+        if "semantic_kernel\\connectors" in filepath:
+            subtopic = filepath.split("\\")[2]
+            connector = filepath.split("\\")[3]
             return {"topic": topic, "subtopic": subtopic, "connector": connector}
         return {"topic": topic, "subtopic": subtopic}
     return {}
@@ -140,10 +144,13 @@ def openai_embedder():
 
 
 def ollama_embedder():
-    return OllamaEmbedding(model_name="llama3.2")
+    return OllamaEmbedding(model_name=os.getenv("OLLAMA_EMBEDDING_MODEL"))
 
 
 def get_sk_pipeline(cache, embedder):
+    lang = Language(language())
+    parser = Parser(lang)
+
     return IngestionPipeline(
         transformations=[
             CodeSplitter(
@@ -204,13 +211,15 @@ async def main(azure: bool = True, qdrant: bool = True):
     gh_client = get_gh_client()
     # Get the github reader
     sk_reader = get_gh_reader_sk(
-        gh_client, ["python/semantic_kernel", "python/samples"]
+        gh_client, ["python\\semantic_kernel", "python\\samples"]
     )
 
     # use the cache to only load from Github once
     if os.path.exists(CACHE_PERSIST_PATH) and os.path.getsize(CACHE_PERSIST_PATH) > 0:
+        logger.info("Loading cache from file")
         cache = SimpleKVStore.from_persist_path(CACHE_PERSIST_PATH)
     else:
+        logger.info("Creating new cache")
         cache = SimpleKVStore()
 
     if azure:
@@ -230,7 +239,6 @@ async def main(azure: bool = True, qdrant: bool = True):
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
     parser = argparse.ArgumentParser(description="Data Ingestion Script")
     parser.add_argument(
         "--no-azure", action="store_false", dest="azure", help="Disable Azure indexing"

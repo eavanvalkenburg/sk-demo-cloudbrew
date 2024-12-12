@@ -24,15 +24,15 @@ from semantic_kernel.data import (
 from data_ingestion.datamodel import SKDataModel, SKQdrantDataModel
 from online_state_service_selector import OnlineStateServiceSelector
 import logging
-# from dotenv import load_dotenv
+from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
 
 
 def setup():
-    # load_dotenv()
-    for key, value in os.environ.items():
-        logger.info(f"{key}: {value}")
+    load_dotenv()
+    # for key, value in os.environ.items():
+    #     logger.info(f"{key}: {value}")
 
     remote_service_id = "online"
     local_service_id = "offline"
@@ -41,16 +41,19 @@ def setup():
     online_embedder = OpenAITextEmbedding(service_id=f"{remote_service_id}-embedding")
     kernel.add_service(online_embedder)
     kernel.add_service(
-        OllamaChatCompletion(service_id=local_service_id, ai_model_id="llama3.2")
+        OllamaChatCompletion(
+            service_id=local_service_id, ai_model_id=os.getenv("OLLAMA_MODEL")
+        )
     )
     offline_embedder = OllamaTextEmbedding(
-        service_id=f"{local_service_id}-embedding", ai_model_id="llama3.2"
+        service_id=f"{local_service_id}-embedding",
+        ai_model_id=os.getenv("OLLAMA_EMBEDDING_MODEL"),
     )
     kernel.add_service(offline_embedder)
 
     kernel.add_plugin(
         plugin_name="chat",
-        parent_directory="/Users/edvan/Work/sk/sk-demo-cloudbrew/plugins",
+        parent_directory="""C:\Work\sk-demo-cloudbrew\plugins""",
     )
 
     azure_ai = AzureAISearchCollection(data_model_type=SKDataModel)
@@ -99,7 +102,7 @@ def setup():
         functions=[
             qdrant_search.create_search(
                 function_name="code_sample_search",
-                description="A search function for samples of Semantic Kernel in python. Use this to find examples.",
+                description="This returns samples of Semantic Kernel code in python. Use the query to find relevant samples of concepts.",
                 options=VectorSearchOptions(
                     filter=VectorSearchFilter.equal_to("topic", "samples"),
                     vector_field_name="embedding",
@@ -113,22 +116,22 @@ def setup():
                     )
                 ],
             ),
-            qdrant_search.create_search(
-                function_name="code_search",
-                description="Get details about the way things are called or implemented in the actual Semantic Kernel codebase.",
-                options=VectorSearchOptions(
-                    filter=VectorSearchFilter.equal_to("topic", "semantic_kernel"),
-                    vector_field_name="embedding",
-                ),
-                parameters=[
-                    KernelParameterMetadata(
-                        name="query",
-                        description="The search term to use for the search",
-                        type_object=str,
-                        is_required=True,
-                    )
-                ],
-            ),
+            # qdrant_search.create_search(
+            #     function_name="code_search",
+            #     description="Get details about the way things are called or implemented in the actual Semantic Kernel codebase.",
+            #     options=VectorSearchOptions(
+            #         filter=VectorSearchFilter.equal_to("topic", "semantic_kernel"),
+            #         vector_field_name="embedding",
+            #     ),
+            #     parameters=[
+            #         KernelParameterMetadata(
+            #             name="query",
+            #             description="The search term to use for the search",
+            #             type_object=str,
+            #             is_required=True,
+            #         )
+            #     ],
+            # ),
         ],
     )
 

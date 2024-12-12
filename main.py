@@ -4,16 +4,16 @@ from utils import internet
 import mesop as me
 from semantic_kernel.contents import (
     ChatHistory,
-    FunctionCallContent,
     StreamingChatMessageContent,
+    TextContent,
 )
-# from dotenv import load_dotenv
+from dotenv import load_dotenv
 
-# load_dotenv()
+load_dotenv()
 
-# import debugpy
+import debugpy
 
-# debugpy.listen(5678)
+debugpy.listen(5678)
 DEFAULT_FONT_FAMILY = '"Lucida Console", monospace'
 SK_GRADIENT = "linear-gradient(90deg, #3D0D59, #801EAE, #C86FEC, #4A94FC) text"
 
@@ -27,8 +27,8 @@ DEFAULT_STYLE_WITH_GRADIENT = {
 
 EXAMPLES = [
     "How awesome is Semantic Kernel?",
-    "What is a AI Agent?",
-    "How to run local LLM's?",
+    "what is a Chat Completion Agent and how do I create one?",
+    "Does semantic kernel support ollama and if so how do I do that?",
 ]
 
 kernel = setup()
@@ -228,8 +228,12 @@ async def call_api(input):
             yield response[0].content
     chat_history.add_user_message(input)
     full_msg: StreamingChatMessageContent = sum(chunks[1:], chunks[0])
-    if not any(isinstance(item, FunctionCallContent) for item in full_msg.items):
-        chat_history.add_message(sum(chunks[1:], chunks[0]))
+    new_items = []
+    for item in full_msg.items:
+        if isinstance(item, TextContent):
+            new_items.append(item)
+    full_msg.items = new_items
+    chat_history.add_message(full_msg)
     state.chat_history = chat_history.model_dump()
 
 

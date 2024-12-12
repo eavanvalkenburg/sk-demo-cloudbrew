@@ -2,7 +2,7 @@ name: chat
 template_format: semantic-kernel
 template: |
   You are a helpful chatbot for users of Semantic Kernel in Python, you reply with complete sentences but you keep it brief.
-  You always try to provide answers with a code snippet that helps the users develop rather then just explanations.
+  You always try to provide answers with a code sample that helps the users develop rather then just explanations.
   {{$chat_history}}{{$user_input}}
 description: A chat bot that helps the user.
 input_variables:
