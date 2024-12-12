@@ -1,5 +1,7 @@
-from contextlib import asynccontextmanager
+import argparse
+import asyncio
 import os
+from contextlib import asynccontextmanager
 
 import nest_asyncio
 import qdrant_client
@@ -9,13 +11,13 @@ from llama_index.core import (
     StorageContext,
     VectorStoreIndex,
 )
-from llama_index.core.schema import BaseNode
+from llama_index.core.extractors import BaseExtractor
 from llama_index.core.ingestion import IngestionCache, IngestionPipeline
 from llama_index.core.node_parser import CodeSplitter
-from llama_index.core.extractors import BaseExtractor
+from llama_index.core.schema import BaseNode
 from llama_index.core.storage.kvstore import SimpleKVStore
-from llama_index.embeddings.openai import OpenAIEmbedding
 from llama_index.embeddings.ollama import OllamaEmbedding
+from llama_index.embeddings.openai import OpenAIEmbedding
 from llama_index.readers.github import GithubClient, GithubRepositoryReader
 from llama_index.vector_stores.azureaisearch import (
     AzureAISearchVectorStore,
@@ -26,14 +28,13 @@ from llama_index.vector_stores.qdrant import QdrantVectorStore
 from tree_sitter import Language, Parser
 from tree_sitter_python import language
 
-
 # dotenv.load_dotenv()
 nest_asyncio.apply()
 
 lang = Language(language())
 parser = Parser(lang)
 
-CACHE_PERSIST_PATH = "data_ingestion/data/data"
+CACHE_PERSIST_PATH = "data_ingestion/data/data.cache"
 
 search_service_endpoint = os.getenv("AZURE_AI_SEARCH_ENDPOINT")
 index_name = os.getenv("AZURE_AI_SEARCH_INDEX_NAME")
@@ -199,31 +200,47 @@ async def get_qdrant_index(nodes):
         )
 
 
-async def main():
+async def main(azure: bool = True, qdrant: bool = True):
     gh_client = get_gh_client()
-    # Load data from a Github repository
+    # Get the github reader
     sk_reader = get_gh_reader_sk(
         gh_client, ["python/semantic_kernel", "python/samples"]
     )
-    # samples_reader = get_gh_reader_sk(gh_client, [])
 
+    # use the cache to only load from Github once
     if os.path.exists(CACHE_PERSIST_PATH) and os.path.getsize(CACHE_PERSIST_PATH) > 0:
         cache = SimpleKVStore.from_persist_path(CACHE_PERSIST_PATH)
     else:
         cache = SimpleKVStore()
 
-    # az_sk_pipeline = get_sk_pipeline(cache, openai_embedder())
-    qd_sk_pipeline = get_sk_pipeline(cache, ollama_embedder())
-    # storage_context = get_storage_context()
-    # az_sk_nodes = await get_nodes(sk_reader, az_sk_pipeline)
-    qd_sk_nodes = await get_nodes(sk_reader, qd_sk_pipeline)
-    # await get_azure_search_index(az_sk_nodes)
-    await get_qdrant_index(qd_sk_nodes)
-    # print(azure_ai_search_index.as_query_engine().query("What is a Agent?"))
-    # print(qdrant_index.as_query_engine().query("What is a Agent?"))
+    if azure:
+        # Load the pipelines with the right embeddings models
+        az_sk_pipeline = get_sk_pipeline(cache, openai_embedder())
+        # load the nodes from github
+        az_sk_nodes = await get_nodes(sk_reader, az_sk_pipeline)
+        # index the nodes
+        await get_azure_search_index(az_sk_nodes)
+    if qdrant:
+        # Load the pipelines with the right embeddings models
+        qd_sk_pipeline = get_sk_pipeline(cache, ollama_embedder())
+        # load the nodes from github
+        qd_sk_nodes = await get_nodes(sk_reader, qd_sk_pipeline)
+        # index the nodes
+        await get_qdrant_index(qd_sk_nodes)
 
 
 if __name__ == "__main__":
-    import asyncio
-
     asyncio.run(main())
+    parser = argparse.ArgumentParser(description="Data Ingestion Script")
+    parser.add_argument(
+        "--no-azure", action="store_false", dest="azure", help="Disable Azure indexing"
+    )
+    parser.add_argument(
+        "--no-qdrant",
+        action="store_false",
+        dest="qdrant",
+        help="Disable Qdrant indexing",
+    )
+    args = parser.parse_args()
+
+    asyncio.run(main(azure=args.azure, qdrant=args.qdrant))
