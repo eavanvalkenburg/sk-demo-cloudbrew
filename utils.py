@@ -17,7 +17,9 @@ def internet(host="1.1.1.1", port=53, timeout=3):
     try:
         socket.setdefaulttimeout(timeout)
         socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((host, port))
+        print("I'm online!")
         return True
-    except socket.error as ex:
-        print(ex)
+    except socket.error:
+        print("I'm offline!")
+        # print(ex)
         return False

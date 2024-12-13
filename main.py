@@ -11,9 +11,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-import debugpy
+# import debugpy
 
-debugpy.listen(5678)
+# debugpy.listen(5678)
 DEFAULT_FONT_FAMILY = '"Lucida Console", monospace'
 SK_GRADIENT = "linear-gradient(90deg, #3D0D59, #801EAE, #C86FEC, #4A94FC) text"
 
@@ -41,6 +41,7 @@ class State:
     output: str
     in_progress: bool
     chat_history: dict = field(default_factory=dict)
+    online: bool = True
 
 
 @me.page(
@@ -194,6 +195,7 @@ def textarea_on_blur(e: me.InputBlurEvent):
 
 async def click_send(e: me.ClickEvent):
     state = me.state(State)
+    state.online = internet()
     if not state.input:
         return
     state.in_progress = True
@@ -317,6 +319,7 @@ def output():
 
 
 def footer():
+    state = me.state(State)
     with me.box(
         style=me.Style(
             position="sticky",
@@ -335,7 +338,7 @@ def footer():
             ),
         )
         me.text(
-            f"Internet status: {"online" if internet() else "offline"}",
+            f"Internet status: {"online" if state.online else "offline"}",
             style=me.Style(
                 font_size=12,
                 text_align="center",
