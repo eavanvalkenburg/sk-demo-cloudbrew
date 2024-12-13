@@ -29,10 +29,8 @@ from dotenv import load_dotenv
 logger = logging.getLogger(__name__)
 
 
-def setup():
+def get_kernel():
     load_dotenv()
-    # for key, value in os.environ.items():
-    #     logger.info(f"{key}: {value}")
 
     remote_service_id = "online"
     local_service_id = "offline"
@@ -106,6 +104,7 @@ def setup():
                 options=VectorSearchOptions(
                     filter=VectorSearchFilter.equal_to("topic", "samples"),
                     vector_field_name="embedding",
+                    top=2,
                 ),
                 parameters=[
                     KernelParameterMetadata(
@@ -116,22 +115,6 @@ def setup():
                     )
                 ],
             ),
-            # qdrant_search.create_search(
-            #     function_name="code_search",
-            #     description="Get details about the way things are called or implemented in the actual Semantic Kernel codebase.",
-            #     options=VectorSearchOptions(
-            #         filter=VectorSearchFilter.equal_to("topic", "semantic_kernel"),
-            #         vector_field_name="embedding",
-            #     ),
-            #     parameters=[
-            #         KernelParameterMetadata(
-            #             name="query",
-            #             description="The search term to use for the search",
-            #             type_object=str,
-            #             is_required=True,
-            #         )
-            #     ],
-            # ),
         ],
     )
 
@@ -144,13 +127,12 @@ def setup():
         print(f"Function: {context.function.name}")
         print(f"Calling function: {context.function.name}")
         print(f"   with arguments: {context.arguments}")
-        # if we don't call next, it will skip this function, and go to the next one
         await next(context)
         print(f"Function: {context.function.name} completed")
-        print(f"    with results: {context.function_result}")
+        print(f"    with results: {str(context.function_result)[:500]}")
 
     return kernel
 
 
 if __name__ == "__main__":
-    kernel = setup()
+    kernel = get_kernel()

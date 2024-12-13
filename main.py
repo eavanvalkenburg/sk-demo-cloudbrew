@@ -1,5 +1,5 @@
 from dataclasses import field
-from backend import setup
+from backend import get_kernel
 from utils import internet
 import mesop as me
 from semantic_kernel.contents import (
@@ -31,7 +31,7 @@ EXAMPLES = [
     "Does semantic kernel support ollama and if so how do I do that?",
 ]
 
-kernel = setup()
+kernel = get_kernel()
 
 
 @me.stateclass
@@ -346,52 +346,3 @@ def footer():
                 **DEFAULT_STYLE_WITH_GRADIENT,
             ),
         )
-
-
-# def sidebar():
-#     state = me.state(State)
-#     with me.box(
-#         style=me.Style(
-#             display="flex",
-#             flex_direction="column",
-#             flex_grow=1,
-#         )
-#     ):
-#         with me.box(style=me.Style(display="flex", gap=20)):
-#             menu_icon(icon="menu", tooltip="Menu", on_click=on_click_menu_icon)
-#             if state.sidebar_expanded:
-#                 me.text(
-#                     _APP_TITLE,
-#                     style=me.Style(margin=me.Margin(bottom=0, top=14)),
-#                     type="headline-6",
-#                 )
-
-#         if state.sidebar_expanded:
-#             menu_item(icon="add", label="New chat", on_click=on_click_new_chat)
-#         else:
-#             menu_icon(icon="add", tooltip="New chat", on_click=on_click_new_chat)
-
-#         if state.sidebar_expanded:
-#             pass
-#             # history_pane()
-
-
-# @me.component
-# def menu_item(
-#     *, icon: str, label: str, key: str = "", on_click: Callable | None = None
-# ):
-#     with me.box(on_click=on_click):
-#         with me.box(
-#             style=me.Style(
-#                 background=me.theme_var("surface-container-high"),
-#                 border_radius=20,
-#                 cursor="pointer",
-#                 display="inline-flex",
-#                 gap=10,
-#                 line_height=1,
-#                 margin=me.Margin.all(10),
-#                 padding=me.Padding(top=10, left=10, right=20, bottom=10),
-#             ),
-#         ):
-#             me.icon(icon)
-#             me.text(label, style=me.Style(height=24, line_height="24px"))
